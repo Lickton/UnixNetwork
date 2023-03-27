@@ -6,9 +6,9 @@
 
 int main(int argc, char **argv)
 {
-  char buff[1024];
-  read(STDOUT_FILENO, buff, sizeof(buff));
+  char *buff[1024];
 
-  write(STDOUT_FILENO, buff, sizeof(buff));
+  puts(argv[1]);
+
   return 0;
 }
