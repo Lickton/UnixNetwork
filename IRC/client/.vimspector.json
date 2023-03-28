@@ -5,7 +5,7 @@
       "filetypes": ["cpp", "c", "objc", "rust"],
       "configuration": {
         "request": "launch",
-        "program": "${workspaceFolder}/a.out",
+        "program": "${workspaceFolder}/client",
         "cwd": "${workspaceFolder}",
         "args": [ ],
         "environment": [ ],

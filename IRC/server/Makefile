@@ -5,7 +5,7 @@ SRC_DIR := ./src
 OBJ_DIR := ./obj
 
 CC := gcc
-CFLAGS := -Wall -I$(INC_DIR)
+CFLAGS := --debug -Wall -I$(INC_DIR)
 
 SRC := $(wildcard $(SRC_DIR)/*.c)
 OBJ := $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRC))
