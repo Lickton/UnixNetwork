@@ -23,7 +23,7 @@ void safe_bind(int __fd, __CONST_SOCKADDR_ARG __addr, socklen_t __len);
 int safe_accept (int __fd, __SOCKADDR_ARG __addr, socklen_t *__restrict __addr_len);
 
 /* main - The server main routine */
-int main()
+int main(int argc, char *argv[])
 {
   log_message(LOG_INFO, "Server starts");
 
@@ -55,20 +55,29 @@ int main()
       close(server_sockfd);
 
       int client_port;
-      char client_info[MAX_BUFFER];
+      char client_in_info[MAX_BUFFER], client_out_info[MAX_BUFFER];
       const char *client_ipv4_addr;
 
       client_ipv4_addr = inet_ntop(AF_INET, &client_addr, buff, sizeof(buff));
       client_port = ntohs(client_addr.sin_port);
 
       sprintf(
-          client_info,
-          "Connection from %s, port %d, process id %d",
+          client_in_info,
+          "Connection from %s, port %d established, process id %d",
           client_ipv4_addr, client_port, getpid()
       );
       
-      log_message(LOG_INFO, client_info);
+      log_message(LOG_INFO, client_in_info);
+
       close(client_socket);
+      sprintf(
+          client_out_info,
+          "Connection from %s, port %d closed, process id %d",
+          client_ipv4_addr, client_port, getpid()
+      );
+      log_message(LOG_INFO, client_out_info);
+      
+      exit(EXIT_SUCCESS);
 
     } else {
       /* father process */
