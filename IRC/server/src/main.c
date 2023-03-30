@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include <pthread.h>
 #include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -9,20 +10,44 @@
 
 #include "../include/log.h"
 
+typedef int USER_ID;
+
+/* User states */
+#define UNDEF       0           /* undefined */
+#define ONLINE      1           /* user connected with server */
+#define OFFLINE     2           /* user not connected with server */
+
 /* Misc manifest constants */
 #define MAX_BUFFER  1024        /* max buffer size */
-#define MAX_CONNET  20          /* at most MAX_CONNET instantaneous */
+#define MAX_USER    20          /* at most MAX_USER instantaneous */
+#define MAX_NAME    7           /* at most 7 characters */
 #define PORT        55312				/* use this port to communicate */
 
-/* Global varibles */
+/* Global variables */
+const char userdata[] = ".irc/server/users";
+struct user_t {                 /* the user struct */
+  int   uid;                    /* user id */
+  char  nick_name[MAX_NAME];    /* nick_name showed to other users */
+  int   state;                  /* UNDEF, ONLINE, OFFLINE */
+  int   cur_fd;                 /* fd to receive and send msg */
+};
+struct user_t users[MAX_USER];  /* The user list */
+/* End global variables */
 
 /* Function prototypes */
+void initusers(char *userPath);
+
 int safe_listen (int __fd, int __n);
 int safe_socket(int __domain, int __type, int __protocol);
 void safe_bind(int __fd, __CONST_SOCKADDR_ARG __addr, socklen_t __len);
 int safe_accept (int __fd, __SOCKADDR_ARG __addr, socklen_t *__restrict __addr_len);
 
-/* main - The server main routine */
+/* Pthead functions */
+void *inform(char *msg, int uid);
+
+/* 
+ * main - The server main routine
+ * */
 int main(int argc, char *argv[])
 {
   log_message(LOG_INFO, "Server starts");
@@ -39,7 +64,7 @@ int main(int argc, char *argv[])
   safe_bind(server_sockfd, (struct sockaddr*)&servAddr, sizeof(servAddr));
 
   // convert state to listen state
-  safe_listen(server_sockfd, MAX_CONNET);
+  safe_listen(server_sockfd, MAX_USER);
 
   // wait for connection
   struct sockaddr_in client_addr;
@@ -66,9 +91,9 @@ int main(int argc, char *argv[])
           "Connection from %s, port %d established, process id %d",
           client_ipv4_addr, client_port, getpid()
       );
-      
       log_message(LOG_INFO, client_in_info);
 
+      // release socket and exit
       close(client_socket);
       sprintf(
           client_out_info,
