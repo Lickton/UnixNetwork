@@ -34,8 +34,6 @@ int main()
 
   printf("connect to the server\n");
 
-  send(servAddr, "Hello, I'm client\n");
-
   close(socketClient);
   return 0;
 }

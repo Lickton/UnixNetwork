@@ -9,8 +9,130 @@
 
 #include "../include/log.h"
 
+/* Misc manifest constants */
+#define MAX_BUFFER  1024        /* max buffer size */
+#define MAX_CONNET  20          /* at most MAX_CONNET instantaneous */
+#define PORT        55312				/* use this port to communicate */
+
+/* Global varibles */
+
+/* Function prototypes */
+int safe_listen (int __fd, int __n);
+int safe_socket(int __domain, int __type, int __protocol);
+void safe_bind(int __fd, __CONST_SOCKADDR_ARG __addr, socklen_t __len);
+int safe_accept (int __fd, __SOCKADDR_ARG __addr, socklen_t *__restrict __addr_len);
+
+/* main - The server main routine */
 int main()
 {
   log_message(LOG_INFO, "Server starts");
+
+  int server_sockfd = safe_socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+
+  // bind socket
+  struct sockaddr_in servAddr;
+  bzero(&servAddr, sizeof(servAddr));
+  servAddr.sin_family				= AF_INET;
+  servAddr.sin_addr.s_addr 	= htonl(INADDR_ANY);
+  servAddr.sin_port         = htons(PORT);
+
+  safe_bind(server_sockfd, (struct sockaddr*)&servAddr, sizeof(servAddr));
+
+  // convert state to listen state
+  safe_listen(server_sockfd, MAX_CONNET);
+
+  // wait for connection
+  struct sockaddr_in client_addr;
+  socklen_t client_addr_len;
+
+  while (1) {
+    int client_socket = safe_accept(server_sockfd, (struct sockaddr*)&client_addr, &client_addr_len);
+    char buff[MAX_BUFFER];
+
+    pid_t pid = fork();
+    if (pid == 0) {
+      /* child process */
+      close(server_sockfd);
+
+      int client_port;
+      char client_info[MAX_BUFFER];
+      const char *client_ipv4_addr;
+
+      client_ipv4_addr = inet_ntop(AF_INET, &client_addr, buff, sizeof(buff));
+      client_port = ntohs(client_addr.sin_port);
+
+      sprintf(
+          client_info,
+          "Connection from %s, port %d, process id %d",
+          client_ipv4_addr, client_port, getpid()
+      );
+      
+      log_message(LOG_INFO, client_info);
+      close(client_socket);
+
+    } else {
+      /* father process */
+
+      close(client_socket);
+    }
+  }
+
+  // control never reach here
   return EXIT_SUCCESS;
+}
+
+/*
+ * Safe functions - encapsolution for functions
+ */
+int safe_socket (int __domain, int __type, int __protocol)
+{
+  int ret = socket(__domain, __type, __protocol);
+  if (ret < 0) {
+    log_message(LOG_ERROR, "Create socket failed");
+    printf("Create socket failed\n");
+
+    exit(EXIT_FAILURE);
+  } else
+    log_message(LOG_INFO, "Socket is created");
+
+  return ret;
+}
+
+void safe_bind(int __fd, __CONST_SOCKADDR_ARG __addr, socklen_t __len)
+{
+  int res = bind(__fd, __addr, __len);
+  if (res < 0) {
+    log_message(LOG_ERROR, "Bind failed");
+    printf("Bind failed\n");
+
+    exit(EXIT_FAILURE);
+  } else
+    log_message(LOG_INFO, "Address is bound");
+}
+
+int safe_listen (int __fd, int __n)
+{
+  int ret = listen(__fd, __n);
+  if (ret < 0) {
+    log_message(LOG_ERROR, "Listen failed");
+    printf("Listen failed\n");
+
+    exit(EXIT_FAILURE);
+  } else
+    log_message(LOG_INFO, "Listen state");
+
+  return ret;
+}
+
+int safe_accept (int __fd, __SOCKADDR_ARG __addr, socklen_t *__restrict __addr_len)
+{
+  int ret = accept(__fd, __addr, __addr_len);
+  if (ret < 0) {
+    log_message(LOG_ERROR, "Accept client connection failed");
+    printf("Accept client connection failed\n");
+
+    exit(EXIT_FAILURE);
+  }
+
+  return ret;
 }
