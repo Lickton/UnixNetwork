@@ -1,0 +1,1 @@
+{"breakpoints": {"line": {"/home/lickton/Public/UnixNetwork/IRC/server/src/main.c": [{"state": "ENABLED", "line": 76, "options": {}, "is_instruction_breakpoint": null}]}, "function": [], "exception": {"filters": []}}, "session": {"user_choices": {}}, "variables": {"watches": []}}
