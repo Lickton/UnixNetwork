@@ -6,7 +6,7 @@ OBJ_DIR := ./obj
 
 CC := gcc
 CFLAGS := -Wall -I$(INC_DIR)
-LDFLAGS := -lcurses
+LDFLAGS := -lncurses
 
 SRC := $(wildcard $(SRC_DIR)/*.c)
 OBJ := $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRC))
